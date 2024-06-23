@@ -20,8 +20,8 @@ This Java application connects to the Gmail server, retrieves emails from the in
 ## Setup
 
 ### 1. Clone the Repository
-git clone https://github.com/joeldelacalle/ForemUem.git
-cd email-verification
+-  git clone https://github.com/joeldelacalle/ForemUem.git
+-  cd email-verification
 
 ### 2. Configure Google Cloud Project
 Go to the Google Cloud Console.
