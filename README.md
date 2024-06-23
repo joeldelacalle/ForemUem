@@ -20,18 +20,17 @@ This Java application connects to the Gmail server, retrieves emails from the in
 ## Setup
 
 ### 1. Clone the Repository
-
-```bash
 git clone https://github.com/your-username/email-verification.git
 cd email-verification
 
-2. Configure Google Cloud Project
+### 2. Configure Google Cloud Project
 Go to the Google Cloud Console.
 Create a new project or select an existing project.
 Enable the Gmail API for your project.
 Create OAuth 2.0 credentials (Client ID and Client Secret).
 Download the credentials.json file and place it in the src/main/resources directory of your project.
-3. Update pom.xml
+
+### 3. Update pom.xml
 Ensure your pom.xml contains the necessary dependencies:
 
 xml
@@ -63,19 +62,18 @@ Copiar código
         <version>1.69</version>
     </dependency>
 </dependencies>
-4. Build the Project
+
+### 4. Build the Project
 Navigate to the root directory of the project and run the following command to build the project:
 
-bash
 Copiar código
 mvn clean install
 Running the Application
 Ensure you have placed your credentials.json file in src/main/resources.
 Run the Main class in your IDE or use the following command to run it from the command line:
-bash
-Copiar código
 mvn exec:java -Dexec.mainClass="com.yourpackage.Main"
-Usage
+
+### 5. Usage
 The application will prompt you to authenticate with your Google account the first time it runs.
 After authentication, the application will retrieve emails from your Gmail inbox.
 It will then verify the headers and the digital signatures of the emails.
@@ -86,16 +84,17 @@ Make your changes.
 Commit your changes (git commit -am 'Add new feature').
 Push to the branch (git push origin feature-branch).
 Create a new Pull Request.
-License
+
+### 5. License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-Acknowledgments
+### 6. Acknowledgments
 Google API Client Library for Java
 JavaMail API
 Bouncy Castle
 
 
-### Explicación de las Secciones del README:
+### 7. Explicación de las Secciones del README:
 
 - **Título y Descripción**: Proporciona una breve descripción del propósito de la aplicación.
 - **Características**: Lista las funcionalidades principales de la aplicación.
