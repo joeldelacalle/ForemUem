@@ -20,7 +20,7 @@ This Java application connects to the Gmail server, retrieves emails from the in
 ## Setup
 
 ### 1. Clone the Repository
-git clone https://github.com/your-username/email-verification.git
+git clone https://github.com/joeldelacalle/ForemUem.git
 cd email-verification
 
 ### 2. Configure Google Cloud Project
@@ -30,50 +30,16 @@ Enable the Gmail API for your project.
 Create OAuth 2.0 credentials (Client ID and Client Secret).
 Download the credentials.json file and place it in the src/main/resources directory of your project.
 
-### 3. Update pom.xml
-Ensure your pom.xml contains the necessary dependencies:
-
-xml
-Copiar código
-<dependencies>
-    <dependency>
-        <groupId>com.google.api-client</groupId>
-        <artifactId>google-api-client</artifactId>
-        <version>1.32.1</version>
-    </dependency>
-    <dependency>
-        <groupId>com.google.oauth-client</groupId>
-        <artifactId>google-oauth-client-jetty</artifactId>
-        <version>1.32.1</version>
-    </dependency>
-    <dependency>
-        <groupId>com.google.apis</groupId>
-        <artifactId>google-api-services-gmail</artifactId>
-        <version>v1-rev110-1.25.0</version>
-    </dependency>
-    <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>javax.mail-api</artifactId>
-        <version>1.6.2</version>
-    </dependency>
-    <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk15on</artifactId>
-        <version>1.69</version>
-    </dependency>
-</dependencies>
-
-### 4. Build the Project
+### 3. Build the Project
 Navigate to the root directory of the project and run the following command to build the project:
+-    mvn clean install
 
-Copiar código
-mvn clean install
 Running the Application
 Ensure you have placed your credentials.json file in src/main/resources.
 Run the Main class in your IDE or use the following command to run it from the command line:
-mvn exec:java -Dexec.mainClass="com.yourpackage.Main"
+-    mvn exec:java -Dexec.mainClass="com.yourpackage.Main"
 
-### 5. Usage
+### 4. Usage
 The application will prompt you to authenticate with your Google account the first time it runs.
 After authentication, the application will retrieve emails from your Gmail inbox.
 It will then verify the headers and the digital signatures of the emails.
@@ -92,7 +58,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 Google API Client Library for Java
 JavaMail API
 Bouncy Castle
-
 
 ### 7. Explicación de las Secciones del README:
 
