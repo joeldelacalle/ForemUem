@@ -87,7 +87,13 @@ public class EmailVerifier {
                     isValid = isValidMessageId(headerValue);
                     break;
                 case "DKIM-Signature":
-                    isValid = FirmaDigitalVerifier.isValidDKIMSignature(headerValue, headers);
+                    String fullDKIMSignature = getFullDKIMSignature(headers);
+                    if (fullDKIMSignature != null) {
+                        fullDKIMSignature = prepareBase64String(fullDKIMSignature); // Prepara la cadena
+                        isValid = FirmaDigitalVerifier.isValidDKIMSignature(fullDKIMSignature, headers);
+                    } else {
+                        isValid = false;
+                    }
                     break;
                 case "Received-SPF":
                     isValid = headerValue != null && headerValue.contains("pass");
@@ -113,7 +119,7 @@ public class EmailVerifier {
         }
     }
 
-    private static boolean validateEmail(String headerName, String email, boolean isSingle) {
+    static boolean validateEmail(String headerName, String email, boolean isSingle) {
         if (isSingle) {
             if (email == null || !isValidEmail(email)) {
                 logMessage("Invalid '" + headerName + "' header.");
@@ -131,7 +137,7 @@ public class EmailVerifier {
         return true;
     }
 
-    private static boolean isValidEmail(String email) {
+    public static boolean isValidEmail(String email) {
         try {
             InternetAddress emailAddr = new InternetAddress(email);
             emailAddr.validate();
@@ -141,7 +147,7 @@ public class EmailVerifier {
         }
     }
 
-    private static boolean isValidDate(String date) {
+    static boolean isValidDate(String date) {
         SimpleDateFormat format = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
         format.setLenient(false);
         try {
@@ -152,7 +158,7 @@ public class EmailVerifier {
         }
     }
 
-    private static boolean isValidSubject(String subject) {
+    static boolean isValidSubject(String subject) {
         if (StringUtils.isBlank(subject)) {
             return false;
         }
@@ -166,7 +172,7 @@ public class EmailVerifier {
         return Pattern.matches(ASCII_PATTERN, subject);
     }
 
-    private static boolean isValidMessageId(String messageId) {
+    static boolean isValidMessageId(String messageId) {
         if (StringUtils.isBlank(messageId)) {
             return false;
         }
@@ -203,14 +209,38 @@ public class EmailVerifier {
 
         return certificate.getPublicKey();
     }
+    
+    private static String getFullDKIMSignature(List<MessagePartHeader> headers) {
+        StringBuilder dkimSignatureBuilder = new StringBuilder();
 
-    private static void logMessage(String message) {
+        for (MessagePartHeader header : headers) {
+            if (header.getName().equalsIgnoreCase("DKIM-Signature")) {
+                dkimSignatureBuilder.append(header.getValue().replaceAll("\\s", ""));
+            }
+        }
+
+        return dkimSignatureBuilder.toString();
+    }
+    
+    private static String prepareBase64String(String base64) {
+        // Eliminar cualquier espacio o salto de línea que pudiera existir
+        String cleanedBase64 = base64.replaceAll("\\s", "");
+
+        // Asegurarse de que la longitud sea múltiplo de 4
+        while (cleanedBase64.length() % 4 != 0) {
+            cleanedBase64 += "=";
+        }
+
+        return cleanedBase64;
+    }
+
+    static void logMessage(String message) {
         if (logger != null) {
             logger.log(message);
         }
     }
 
-    private static void logSuccess(String message) {
+    static void logSuccess(String message) {
         if (logger != null) {
             logger.logSuccess(message);
         }

@@ -1,5 +1,8 @@
 package com.forem.swing;
 
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.MimeMessage;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
@@ -7,9 +10,15 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Properties;
+
 import com.forem.manager.GmailOAuthManager;
 import com.forem.verifier.EmailVerifier;
+import com.forem.verifier.EmlVerifier;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
@@ -21,6 +30,7 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
 	private JLabel titleLabel;
     private JTextPane logArea;
     private JButton startButton;
+    private JButton loadEmailsButton; // Botón para cargar emails
     private JPanel panel;
     private Gmail gmailService;
     
@@ -54,12 +64,29 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
         panel.add(scrollPane, BorderLayout.CENTER);
 
         // Botón de inicio
-        startButton = new JButton("Start Verification");
+        startButton = new JButton("Start Gmail email verification");
         startButton.setFont(new Font("Arial", Font.BOLD, 16)); // Botón con fuente más grande
         startButton.setBackground(new Color(0, 153, 76)); // Fondo verde
         startButton.setForeground(Color.WHITE); // Texto blanco en el botón
-        panel.add(startButton, BorderLayout.SOUTH);
+        
+        // Inicializar el botón de carga de emails
+        loadEmailsButton = new JButton("Verify selected email");
+        loadEmailsButton.setFont(new Font("Arial", Font.BOLD, 16));
+        loadEmailsButton.setBackground(new Color(0, 153, 76));
+        loadEmailsButton.setForeground(Color.WHITE);
+        
+        // Crear un panel para los botones
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(1, 2)); // Una fila, dos columnas
+        buttonPanel.add(loadEmailsButton);
+        buttonPanel.add(startButton);
+        // Añadir el botón al panel
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Añadir ActionListener al botón de startButton
         startButton.addActionListener(e -> startVerification());     
+        // Añadir ActionListener al botón de cargar emails
+        loadEmailsButton.addActionListener(e -> cargarEmails());
         
     }
 
@@ -84,7 +111,7 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
         SwingUtilities.invokeLater(() -> {
             try {
                 StyledDocument doc = logArea.getStyledDocument();
-                Style style = logArea.addStyle("Green", null);
+                Style style = logArea.addStyle("Blue", null);
                 StyleConstants.setForeground(style, Color.BLUE);
 
                 doc.insertString(doc.getLength(), message + "\n", style);
@@ -94,6 +121,34 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
             }
         });
     }
+    
+    private void cargarEmails() {
+        JFileChooser fileChooser = new JFileChooser();
+        int returnValue = fileChooser.showOpenDialog(this);
+
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+				procesarArchivoEmails(selectedFile);
+			} catch (FileNotFoundException | MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    }
+    
+    private void procesarArchivoEmails(File file) throws FileNotFoundException, MessagingException {
+    	// Crear una sesión sin propiedades (no se necesita conexión real)
+    	Properties props = new Properties();
+    	Session session = Session.getDefaultInstance(props, null);
+
+    	// Leer el archivo .eml en un objeto MimeMessage
+    	FileInputStream fis = new FileInputStream(file);
+    	MimeMessage message = new MimeMessage(session, fis);
+    	EmlVerifier.verifyEmailHeaders(message);
+    	
+    }
+    
     private void startVerification() {
         // Clear the log area before starting
         logArea.setText("");
@@ -102,7 +157,6 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
             gmailService = GmailOAuthManager.getGmailService();
         } catch (Exception e) {
         	logArea.setForeground(Color.RED); // Optional: Set color for errors
-//            logArea.add("Error: " + e.getMessage() + "\n");
          // Reset the color back to black for subsequent messages
             logArea.setForeground(Color.BLACK);
         }
@@ -113,7 +167,6 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
             List<Message> messages = listResponse.getMessages();
             if (messages == null || messages.isEmpty()) {
             	logArea.setForeground(Color.RED); // Optional: Set color for errors
-//            	logArea.append("No messages found.");
             	// Reset the color back to black for subsequent messages
                 logArea.setForeground(Color.BLACK);
             } else {
@@ -123,8 +176,9 @@ public class ForemIU extends JFrame implements EmailVerifier.Logger{
                 }
             }
         } catch (Exception e) {
+        	//Se elimina el token para verificar que no es problema de la caducidad del mismo
+        	GmailOAuthManager.deleteStoredTokens();
         	logArea.setForeground(Color.RED); // Optional: Set color for errors
-//        	logArea.append("Error verifying emails: " + e.getMessage());
         	// Reset the color back to black for subsequent messages
             logArea.setForeground(Color.BLACK);
         }

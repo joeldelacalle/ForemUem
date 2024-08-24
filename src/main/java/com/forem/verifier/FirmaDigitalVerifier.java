@@ -46,8 +46,13 @@ public class FirmaDigitalVerifier {
     }
     
     private static boolean verifyDKIMSignature(String publicKey, String signedHeaders, String bodyHash, byte[] signature) throws Exception {
-    	// Decodificar la clave pública
-        byte[] decodedKey = decodeBase64(publicKey);
+    	// Extraer la parte de la clave pública después de 'p='
+        String base64PublicKey = extractPublicKey(publicKey);
+    	// Prepara la clave pública
+        String preparedPublicKey = prepareBase64String(base64PublicKey);
+
+        // Decodificar la clave pública
+        byte[] decodedKey = decodeBase64(preparedPublicKey);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedKey);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA","BC");
         PublicKey pubKey = keyFactory.generatePublic(keySpec);
@@ -63,7 +68,6 @@ public class FirmaDigitalVerifier {
     }
     
     
-    //Obtener la clave pública DKIM a través de DNS
     public static String fetchPublicKey(String domain, String selector) {
         try {
             String txtRecordName = selector + "._domainkey." + domain;
@@ -72,13 +76,43 @@ public class FirmaDigitalVerifier {
 
             if (lookup.getResult() == Lookup.SUCCESSFUL) {
                 TXTRecord txtRecord = (TXTRecord) lookup.getAnswers()[0];
-                return txtRecord.getStrings().stream().collect(Collectors.joining());
+                // Obtener la cadena completa
+                String publicKeyString = txtRecord.getStrings().stream().collect(Collectors.joining());
+
+                // Limpiar y preparar la cadena Base64
+                return prepareBase64String(publicKeyString);
             }
         } catch (TextParseException e) {
             e.printStackTrace();
         }
         return null;
     }
+
+    public static String prepareBase64String(String base64) {
+        // Eliminar cualquier espacio o salto de línea
+        String cleanedBase64 = base64.replaceAll("\\s", "");
+
+        // Reemplazar caracteres URL-safe con caracteres Base64 estándar
+        cleanedBase64 = cleanedBase64.replace('-', '+').replace('_', '/');
+
+     // Asegurarse de que la longitud sea múltiplo de 4
+        int padding = 4 - (cleanedBase64.length() % 4);
+        if (padding != 4) {
+            cleanedBase64 = cleanedBase64 + "=".repeat(padding);
+        }
+
+        return cleanedBase64;
+    }
+    private static String extractPublicKey(String dkimPublicKeyRecord) {
+        String[] parts = dkimPublicKeyRecord.split(";");
+        for (String part : parts) {
+            if (part.startsWith("p=")) {
+                return part.substring(2).trim();
+            }
+        }
+        throw new IllegalArgumentException("Public key part 'p=' not found in DKIM record");
+    }
+    
     private static String getSignedHeaders(List<MessagePartHeader> headers, String headerFields) {
         // Reconstruir los headers firmados de acuerdo a `h` en DKIM-Signature
     	List<String> signedHeaderNames = Arrays.asList(headerFields.split(":"));
@@ -96,18 +130,28 @@ public class FirmaDigitalVerifier {
     }
     
     public static byte[] decodeBase64(String bValue) {
-    	// Eliminar caracteres no válidos (por ejemplo, espacios)
-        String cleanedBValue = bValue.replaceAll("\\s", "");
-
-        // Reemplazar caracteres URL-safe Base64 si es necesario
-        cleanedBValue = cleanedBValue.replace('-', '+').replace('_', '/');
-
-        // Verificar que la longitud sea múltiplo de 4
-        while (cleanedBValue.length() % 4 != 0) {
-            cleanedBValue += "=";
+//        System.out.println("Original string: " + bValue);
+        
+        if (bValue == null || bValue.isEmpty()) {
+            throw new IllegalArgumentException("The input string is null or empty.");
         }
 
-        // Intentar decodificar la cadena
-        return Base64.getDecoder().decode(cleanedBValue);
+        String cleanedBValue = bValue.replaceAll("\\s", "");
+//        System.out.println("Cleaned string: " + cleanedBValue);
+
+        int length = cleanedBValue.length();
+        if (length % 4 != 0) {
+            int paddingLength = 4 - (length % 4);
+            cleanedBValue += "=".repeat(paddingLength);
+        }
+
+//        System.out.println("Padded string: " + cleanedBValue);
+
+        try {
+            return Base64.getDecoder().decode(cleanedBValue);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error during Base64 decoding: " + e.getMessage());
+            throw e;
+        }
     }
 }
