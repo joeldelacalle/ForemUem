@@ -1,4 +1,4 @@
-# Email Header and Signature Verification
+# Email Verification
 
 This Java application connects to the Gmail server, retrieves emails from the inbox, and verifies the email headers and digital signatures. The application uses OAuth2 for authentication and the Google Gmail API for retrieving emails.
 
